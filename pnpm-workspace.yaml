@@ -1,0 +1,15 @@
+# pnpm 11 从这里读取工作区级设置。
+#
+# allowBuilds：允许 esbuild 运行其安装脚本（它会准备平台二进制）。
+# 之前这里是脚手架留下的占位字符串，导致构建脚本被静默忽略。
+allowBuilds:
+  esbuild: true
+
+# overrides：把这两个传递依赖钉在稍旧的补丁版本上。
+# 原因：本机 pnpm 启用了供应链策略（minimumReleaseAge），
+# 会拒绝锁文件里"发布时间过新"的包；这两个新版本因此无法通过校验。
+# 钉版本既满足策略，也让依赖解析保持确定性。
+# 等新版本超出策略窗口后，可以删掉这两条 override 再升级。
+overrides:
+  enhanced-resolve: 5.25.0
+  zod: 4.6.4

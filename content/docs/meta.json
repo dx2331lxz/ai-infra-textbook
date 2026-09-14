@@ -1,0 +1,18 @@
+{
+  "title": "AI Infra 自学教材",
+  "pages": [
+    "index",
+    "getting-started",
+    "---教材正文---",
+    "01-performance-memory",
+    "02-frameworks-autodiff",
+    "03-gpu-kernels",
+    "04-training-systems",
+    "05-inference-serving",
+    "06-compilers",
+    "07-cluster-scheduling",
+    "08-frontiers",
+    "---资料---",
+    "99-papers"
+  ]
+}

@@ -1,0 +1,50 @@
+---
+title: 论文清单
+description: 配套的 24 篇 P0 必读论文与 12 周阅读计划
+---
+
+## 📚 配套论文清单
+
+教材正文负责建立**判断依据**，论文清单负责带你看**真实系统是怎么做的**。两者互补，交替进行。
+
+完整的清单（约 90 个条目，含 24 篇 P0 必读）保存在仓库的 `material/` 目录里，是纯 Markdown 文件：
+
+- **[打开 material/ 目录](https://github.com/dx2331lxz/ai-infra-textbook/tree/main/material)** ← 在 GitHub 上查看
+
+## 清单里有什么
+
+| 文件 | 内容 |
+| --- | --- |
+| `README.md` | 总览：三种读法、优先级图例、模块依赖图、12 周计划、24 篇 P0 勾选清单 |
+| `01-体系结构与性能模型.md` | Roofline、TPU、加速器体系结构、量化综述 |
+| `02-框架与自动微分.md` | autodiff 综述、PyTorch / TF 范式对比、重计算 |
+| `03-GPU编程与算子优化.md` | FlashAttention 1/2、Triton、online softmax、Winograd |
+| `04-训练系统与并行策略.md` | GPipe / PipeDream / Megatron / ZeRO / FSDP、3D 并行、MoE |
+| `05-推理系统与Serving.md` | Orca、vLLM、PD 分离、量化四件套、投机解码、SGLang |
+| `06-编译器与图优化.md` | TVM、MLIR、Ansor、TASO、Rammer、Welder、TorchInductor |
+| `07-集群调度存储与数据.md` | Ray、BytePS、Pollux / Sia、Gemini、弹性与抢占 |
+| `08-前沿专题选读.md` | 六条演进链 + 自己跟踪前沿的方法 |
+| `APPENDIX-术语表与入门资源.md` | 中英术语对照、公开课、教材、中文导读入口、常见误区 |
+
+## 怎么和教材配合
+
+| 读完教材的 | 就去读清单里的 |
+| --- | --- |
+| [第一篇 · 性能与存储层次](/docs/01-performance-memory) | `01-体系结构与性能模型.md`（Roofline、TPU 两篇优先） |
+| [第二篇 · 框架与自动微分](/docs/02-frameworks-autodiff) | `02-框架与自动微分.md` |
+| [第三篇 · GPU 与算子优化](/docs/03-gpu-kernels) | `03-GPU编程与算子优化.md` |
+| [第四篇 · 训练系统](/docs/04-training-systems) | `04-训练系统与并行策略.md` |
+| [第五篇 · 推理系统](/docs/05-inference-serving) | `05-推理系统与Serving.md` |
+| [第六篇 · 编译器](/docs/06-compilers) | `06-编译器与图优化.md` |
+| [第七篇 · 集群调度](/docs/07-cluster-scheduling) | `07-集群调度存储与数据.md` |
+| [第八篇 · 前沿专题](/docs/08-frontiers) | `08-前沿专题选读.md` |
+
+## 关于清单的可靠性
+
+- 所有外链都**逐条实测过可访问性**（96 个链接中 95 个返回 200）。
+- 唯一例外是 Gemini（SOSP 2023），只有 ACM 出版页，机构外需要付费访问，已在清单中标注。
+- 会议与年份经过核对；已修正两处流传较广的错误：**Welder 是 OSDI 2023 而非 NSDI 2023**；Triton 的 MAPS 2019 论文早期流传的镜像链接已失效，清单改用官方仓库。
+
+---
+
+← 返回 [首页](/docs) ｜ 上一章：[第八篇 · 前沿专题](/docs/08-frontiers)

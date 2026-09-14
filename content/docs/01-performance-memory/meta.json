@@ -1,0 +1,16 @@
+{
+  "title": "第一篇 · 性能与存储层次",
+  "description": "从「访存比计算贵」讲起，建立后面所有章节都要用的判断依据",
+  "icon": "Gauge",
+  "root": true,
+  "pages": [
+    "index",
+    "cost-of-memory-access",
+    "locality",
+    "how-cache-works",
+    "optimization-methodology",
+    "cpu-to-gpu",
+    "labs",
+    "review"
+  ]
+}

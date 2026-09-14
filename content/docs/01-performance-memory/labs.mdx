@@ -1,0 +1,349 @@
+---
+title: 1.6 动手实验
+description: 三个可以真的跑起来的实验，把前面四节的结论亲自测出来
+---
+
+## 学习目标
+
+这一节没有新知识。它的目的是让你**亲眼看到**前面几节讲的差异——因为性能这件事，测过一次和读过十遍是两种理解。
+
+三个实验：
+
+| 实验 | 验证什么 | 大约用时 |
+| --- | --- | --- |
+| [实验一](#实验一矩阵乘的三种写法) | 循环顺序与分块的威力 | 40 分钟 |
+| [实验二](#实验二扫出存储层次的台阶) | 工作集大小超过容量会掉台阶 | 30 分钟 |
+| [实验三](#实验三观测-cache-缺失) | 用工具看到缺失率 | 20 分钟 |
+
+## 准备工作
+
+实验一和实验二用 C 语言写（代码会完整给出，不需要你会写 C）。检查一下编译器：
+
+```bash
+cc --version
+```
+
+macOS 上这通常是 Clang。Linux 上用 `gcc` 或 `clang` 都可以，把下文命令里的 `cc` 按需替换。
+
+---
+
+## 实验一：矩阵乘的三种写法
+
+这个实验验证 **1.2 节的循环顺序** 和 **1.3 节的分块** 到底能带来多大差别。
+
+把下面的代码保存为 `matmul.c`：
+
+```c
+// matmul.c —— 比较矩阵乘的三种写法
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+#define N 1024          // 矩阵规模：三个 N×N 的 float 矩阵共 12 MB
+#define T 64            // 分块的块大小
+
+static float *A, *B, *C;
+
+static double now_sec(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (double)ts.tv_sec + (double)ts.tv_nsec * 1e-9;
+}
+
+static void reset_C(void) {
+    memset(C, 0, sizeof(float) * (size_t)N * N);
+}
+
+// 计算一个校验和，确认三种写法结果一致
+static double checksum(void) {
+    double s = 0;
+    for (size_t i = 0; i < (size_t)N * N; i++) s += C[i];
+    return s;
+}
+
+// 写法一：i-j-k。最内层沿 B 的“列”方向走，每次跨越一整行 —— 空间局部性最差
+static void mm_ijk(void) {
+    for (int i = 0; i < N; i++)
+        for (int j = 0; j < N; j++) {
+            float s = 0.0f;
+            for (int k = 0; k < N; k++)
+                s += A[(size_t)i * N + k] * B[(size_t)k * N + j];
+            C[(size_t)i * N + j] = s;
+        }
+}
+
+// 写法二：i-k-j。最内层沿 B 的“行”方向走，连续访问 —— 已是一次优化
+static void mm_ikj(void) {
+    for (int i = 0; i < N; i++)
+        for (int k = 0; k < N; k++) {
+            float a = A[(size_t)i * N + k];
+            for (int j = 0; j < N; j++)
+                C[(size_t)i * N + j] += a * B[(size_t)k * N + j];
+        }
+}
+
+// 写法三：在 i-k-j 的基础上分块，让三个 T×T 的小块能同时待在快存储里
+static void mm_blocked(void) {
+    for (int ii = 0; ii < N; ii += T)
+        for (int kk = 0; kk < N; kk += T)
+            for (int jj = 0; jj < N; jj += T)
+                for (int i = ii; i < ii + T; i++)
+                    for (int k = kk; k < kk + T; k++) {
+                        float a = A[(size_t)i * N + k];
+                        for (int j = jj; j < jj + T; j++)
+                            C[(size_t)i * N + j] += a * B[(size_t)k * N + j];
+                    }
+}
+
+static void run(const char *name, void (*fn)(void)) {
+    reset_C();
+    double t0 = now_sec();
+    fn();
+    double dt = now_sec() - t0;
+    // 2*N^3 次浮点运算 = 一次乘 + 一次加
+    double gflops = 2.0 * N * N * N / dt / 1e9;
+    printf("%-24s %8.3f s   %8.2f GFLOP/s   校验和=%.0f\n",
+           name, dt, gflops, checksum());
+}
+
+int main(void) {
+    size_t sz = (size_t)N * N * sizeof(float);
+    A = malloc(sz); B = malloc(sz); C = malloc(sz);
+    if (!A || !B || !C) { fprintf(stderr, "内存分配失败\n"); return 1; }
+
+    for (size_t i = 0; i < (size_t)N * N; i++) {
+        A[i] = (float)(i % 7) * 0.1f;
+        B[i] = (float)(i % 5) * 0.2f;
+    }
+
+    printf("矩阵规模 %d×%d，块大小 T=%d\n\n", N, N, T);
+    run("1) i-j-k（局部性最差）", mm_ijk);
+    run("2) i-k-j（连续访问）",   mm_ikj);
+    run("3) 分块 i-k-j",          mm_blocked);
+    return 0;
+}
+```
+
+编译并运行：
+
+```bash
+cc -O2 -o matmul matmul.c
+./matmul
+```
+
+### 你会看到什么
+
+三种写法的**浮点运算次数完全相同**，但耗时会有明显差距：
+
+- `i-j-k` 最慢。
+- `i-k-j` 快得多（通常 3–10 倍）。
+- 分块还要再快一截（具体倍数取决于你的 CPU 的 Cache 容量和编译器）。
+
+三行的**校验和应该一致**——如果不一致，说明代码或编译器有异常（比如编译器做了不安全的浮点重排），值得停下来看看。
+
+### 接着做这几件事
+
+1. **把 `N` 改成 256、2048**，再跑一次。看看分块带来的收益随 `N` 怎么变化。为什么 `N` 很小时分块优势不明显？（提示：三个矩阵总共多小？装得下 Cache 吗？）
+2. **把 `T` 改成 8、16、32、128、256**，观察收益变化。`T` 太大时为什么会变慢？（提示：三个 T×T 块要同时驻留。）
+3. **给 `mm_blocked` 加上多累加器**（1.4 节讲的多路并行），看看还能不能再提升。
+
+> 💡 **这个实验是本篇的核心。** 如果你只做一个实验，做这个。亲手测出"同样的运算次数、不同的搬运方式、差几倍性能"，1.2 和 1.3 节的内容就真正变成你的了。
+
+---
+
+## 实验二：扫出存储层次的台阶
+
+这个实验验证 **1.2 节的工作集**：数据装得下快存储时快，装不下时慢。
+
+保存为 `workingset.c`：
+
+```c
+// workingset.c —— 扫描不同工作集大小，测量有效带宽
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+static double now_sec(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (double)ts.tv_sec + (double)ts.tv_nsec * 1e-9;
+}
+
+int main(void) {
+    printf("%12s %14s %14s\n", "工作集(MB)", "耗时(ms)", "有效带宽(GB/s)");
+
+    for (size_t mb = 1; mb <= 512; mb *= 2) {
+        size_t n = mb * 1024 * 1024 / sizeof(double);
+        double *a = malloc(n * sizeof(double));
+        if (!a) { printf("%12zu  分配失败\n", mb); break; }
+        memset(a, 1, n * sizeof(double));
+
+        // 调整重复次数，让每种规模都搬运大致相同的数据量
+        long reps = (long)(64 * 1024 * 1024 / (n ? n : 1));
+        if (reps < 1) reps = 1;
+
+        double best = 1e30;
+        for (int trial = 0; trial < 3; trial++) {   // 取三次里最快的一次
+            double t0 = now_sec();
+            double s = 0;
+            for (long r = 0; r < reps; r++)
+                for (size_t i = 0; i < n; i++)
+                    s += a[i];
+            double dt = now_sec() - t0;
+            if (dt < best) best = dt;
+            if (s == 123456789.0) printf("");       // 防止被优化掉
+        }
+
+        double bytes = (double)reps * (double)n * sizeof(double);
+        printf("%12zu %14.2f %14.2f\n", mb, best * 1e3, bytes / best / 1e9);
+        free(a);
+    }
+    return 0;
+}
+```
+
+```bash
+cc -O2 -o workingset workingset.c
+./workingset
+```
+
+### 你会看到什么
+
+有效带宽在小工作集时较高，随着工作集增大**掉台阶**——通常你会看到一到两个明显的台阶。台阶的位置大致对应你机器的 L2、L3 容量。
+
+> 💡 **注意**：现代 CPU 有硬件预取器，顺序扫描会被很好地预取，所以台阶可能不如随机访问那么陡。想看更明显的效果，把内层循环改成以固定步长跳跃访问。
+
+### 接着做这几件事
+
+1. **把顺序访问改成随机访问**（比如用一个打乱的下标数组做间接索引），重跑一次。台阶会变得非常明显——因为预取器帮不上忙了。
+2. **在一个有更大 L3 或不同架构的机器上再跑一次**，比较台阶位置。这就是"为什么同一份代码在不同机器上表现不同"。
+3. **查一下你 CPU 的 L1/L2/L3 容量**（macOS: `sysctl hw.l1icachesize hw.l2cachesize hw.l3cachesize`；Linux: `lscpu`），和你测出的台阶对一对。
+
+---
+
+## 实验三：观测 Cache 缺失
+
+前两个实验是"看时间"，这个实验是"看硬件计数"。
+
+### Linux
+
+`perf` 可以直接读出 cache 缺失：
+
+```bash
+# 总体统计
+perf stat -e cycles,instructions,cache-references,cache-misses,branch-misses ./matmul
+
+# 找出热点函数
+perf record ./matmul
+perf report
+```
+
+重点看两个比值：
+
+- **cache-misses / cache-references**：缺失率。1.3 节的 $m$。
+- **instructions / cycles**：IPC。这个值低（比如小于 1）通常意味着**在等内存**。
+
+### macOS
+
+macOS 没有 `perf`，替代方案：
+
+```bash
+# 用 Instruments 的命令行前端采集 CPU 计数器
+xcrun xctrace record --template 'CPU Counters' --launch ./matmul --output trace.trace
+```
+
+如果这一步太麻烦，**完全可以用实验一和实验二的结果代替**：耗时差异本身就是缺失率差异的证据，你不需要工具来"证明"它。
+
+### 看不到硬件计数器时怎么判断
+
+用**控制变量**也能推断出缺失情况：
+
+1. 固定数据规模，只改**循环顺序** → 性能变了，运算次数没变 → 说明是**访存模式**的问题。
+2. 固定循环顺序，只改**数据规模** → 超过某个大小后性能掉台阶 → 说明是**容量**问题。
+3. 固定一切，只改**数据布局**（比如转置一个矩阵）→ 性能变了 → 说明是**冲突或步长**问题。
+
+**这三条判断方法比任何工具都通用**，而且不依赖平台。
+
+---
+
+## Python / NumPy 快速版
+
+不想编译 C 的话，用 NumPy 也能看到部分效果（NumPy 内部是编译好的高速代码，所以循环顺序的差异体现在**矩阵运算的写法**上）：
+
+```python
+import numpy as np
+import time
+
+N = 2048
+A = np.random.rand(N, N).astype(np.float32)
+B = np.random.rand(N, N).astype(np.float32)
+
+# 一次性矩阵乘（底层做了分块与向量化）
+t0 = time.perf_counter()
+C1 = A @ B
+print(f"A @ B          : {time.perf_counter() - t0:.3f}s")
+
+# 手工分块，用 Python 循环调用小规模矩阵乘
+T = 256
+t0 = time.perf_counter()
+C2 = np.zeros((N, N), dtype=np.float32)
+for ii in range(0, N, T):
+    for kk in range(0, N, T):
+        for jj in range(0, N, T):
+            C2[ii:ii+T, jj:jj+T] += A[ii:ii+T, kk:kk+T] @ B[kk:kk+T, jj:jj+T]
+print(f"手工分块        : {time.perf_counter() - t0:.3f}s")
+
+print("结果一致:", np.allclose(C1, C2, rtol=1e-3, atol=1e-2))
+```
+
+> ⚠️ 这里手工分块**通常会更慢**——因为 NumPy 的 `@` 已经做过分块了，你在上层再分一次只是增加了 Python 循环开销。这个反例本身也是重要的一课：**先搞清楚已有的库做了什么，再决定要不要自己优化。**
+
+---
+
+## 实验记录表
+
+建议把你的结果记下来，之后换机器或换编译器时可以对比：
+
+| 实验 | 配置 | 结果 |
+| --- | --- | --- |
+| 实验一 | N=1024, T=64 | i-j-k: ____ s ｜ i-k-j: ____ s ｜ 分块: ____ s |
+| 实验一 | 最优 T = ____ | |
+| 实验二 | 带宽台阶位置 | ____ MB 处掉台阶 |
+| 你的 CPU | L1 / L2 / L3 | ____ / ____ / ____ |
+
+---
+
+## 与 AI Infra 的连线
+
+这三个实验做的事，和真实 GPU kernel 优化**在方法论上完全一样**：
+
+1. **先用控制变量把瓶颈定位到某一类**（访存？容量？分支？），而不是凭感觉改代码。
+2. **优化搬运方式，而不是死磕运算次数**。
+3. **算清楚了再动手**：1.3 节的分块分析就是"先估收益上限，再决定值不值得做"。
+
+第三篇会把这一套搬到 GPU 上，届时你会发现：**除了"数据要自己搬"这一点，其他全是本篇已经做过的事。**
+
+---
+
+## 关键结论
+
+1. 三种矩阵乘写法运算次数相同，性能差数倍——**差异全部来自访存模式**。
+2. 工作集超过快存储容量时，有效带宽会**掉台阶**。
+3. 判断缺失类型的三种控制变量法：改循环顺序、改数据规模、改数据布局。
+4. **已有库往往已经做了优化**——先搞清楚它在做什么，再决定要不要自己动手。
+
+---
+
+## 自测问题
+
+1. 实验一里，为什么 `N` 很小时分块的收益不明显？
+2. 实验一里，为什么 `T` 太大反而会变慢？用"三个块要同时驻留"解释。
+3. 实验二的台阶位置说明了什么？如果换个 L3 更大的 CPU，曲线会怎么变？
+4. 你在一台没有 `perf` 的机器上，怎么判断一个循环是容量受限还是冲突受限？
+5. NumPy 手工分块的例子为什么反而更慢？这件事给你的启示是什么？
+
+---
+
+← 上一节：[1.5 从 CPU 到 GPU](/docs/01-performance-memory/cpu-to-gpu) ｜ 下一节 → [1.7 自测与延伸](/docs/01-performance-memory/review)
