@@ -41,6 +41,14 @@
   - **前置知识**：上面的四个术语。
   - **建议用时**：2.5 小时。
 
+- [ ] **P0** · [A Survey on Inference Optimization Techniques for Mixture of Experts Models](https://arxiv.org/abs/2412.14219) · **ACM Computing Surveys 2026**
+  - **主旨**：第 1 篇的地图对 MoE 是**不够用的**——MoE 有一整批它不覆盖的特有难题：专家并行与 all-to-all 通信、专家卸载与缓存、稀疏计算、以及"不同专家的激活分布差异极大"给量化带来的麻烦。这篇综述把 MoE 推理优化的算法层、系统层、硬件层技术系统化梳理了一遍，242 篇参考文献，是目前这个方向覆盖面最全的一份。
+  - **为什么读 / 读到什么程度**：**泛读但通读**，当目录用。读完你应该能回答："一个 MoE 推理系统，在算法、系统、硬件三层各有哪些可动的旋钮？"
+  - **前置知识**：第 1 篇；以及 04 模块的 GShard / Switch Transformers / DeepSeekMoE（需要先知道 MoE 的基本结构，否则这篇读不下去）。
+  - **建议用时**：3 小时。
+  - **为什么值得单独列 P0**：如果你要做 MoE 相关的方向（压缩、端侧部署、推理加速），这篇是**最省时间的入口**——它能把 242 篇工作压缩成一张你能看懂的地图，比零散读方法论文效率高得多。
+  - **发表信息**：ACM Computing Surveys, Vol. 58, Issue 10, pp. 1–37, 2026 年 3 月在线发表（DOI `10.1145/3794845`）。该刊是中科院计算机科学大类 **1 区 TOP**、Impact Factor 30+，是计算机领域综述的顶刊。⚠️ arXiv 页面上仍显示 "Under Review"，那是作者未更新元数据，实际已正式出版。
+
 ### 2. 连续批处理（Continuous Batching）的起点
 
 - [ ] **P0** ⭐ · [Orca: A Distributed Serving System for Transformer-Based Generative Models](https://www.usenix.org/conference/osdi22/presentation/yu) · OSDI 2022

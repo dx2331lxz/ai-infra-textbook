@@ -30,7 +30,7 @@
 | **P1** | 应读。是 P0 的自然延伸，或某个子方向的代表作 | 泛读：读懂摘要、系统图、实验里最关键的一个对比即可 |
 | **P2** | 选读。按兴趣或工作方向挑，用来判断前沿走向 | 扫读：只看摘要与结论，知道"有这么个方向"就够 |
 
-**全库规模**：P0 **24 篇**（其中标 ⭐ 的 **16 篇**需要精读，其余读懂主图与结论即可），P1 **38 篇**，P2 **30 条**（含若干"按需检索某方向综述"的开放条目，不是固定论文）。模块 08 会重复引用前序模块的论文，所以条目总数大于去重后的论文数。
+**全库规模**：P0 **25 篇**（其中标 ⭐ 的 **16 篇**需要精读，其余读懂主图与结论即可），P1 **38 篇**，P2 **30 条**（含若干"按需检索某方向综述"的开放条目，不是固定论文）。模块 08 会重复引用前序模块的论文，所以条目总数大于去重后的论文数。
 
 判断你"入门了"的标准很简单：**P0 全部读完，并且能用自己的话解释下面第三节里的模块依赖图。**
 
@@ -100,7 +100,7 @@
 
 ---
 
-## 五、P0 全局勾选清单（24 篇）
+## 五、P0 全局勾选清单（25 篇）
 
 ⭐ 表示这 16 篇需要精读，其余 P0 读懂主图与结论即可。
 
@@ -128,6 +128,7 @@
 
 **模块 05 推理系统与 Serving**
 - [ ] [Towards Efficient Generative Large Language Model Serving: A Survey](https://arxiv.org/abs/2312.15234) · 2023
+- [ ] [A Survey on Inference Optimization Techniques for Mixture of Experts Models](https://arxiv.org/abs/2412.14219) · ACM Computing Surveys 2026
 - [ ] ⭐ [Orca: A Distributed Serving System for Transformer-Based Generative Models](https://www.usenix.org/conference/osdi22/presentation/yu) · OSDI 2022
 - [ ] ⭐ [Efficient Memory Management for LLM Serving with PagedAttention (vLLM)](https://arxiv.org/abs/2309.06180) · SOSP 2023
 - [ ] ⭐ [Fast Inference from Transformers via Speculative Decoding](https://arxiv.org/abs/2211.17192) · ICML 2023

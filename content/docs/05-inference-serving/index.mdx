@@ -46,7 +46,9 @@ description: 训好的模型，怎么低成本、低延迟地服务出去
 
 ## 对应的论文（见论文清单）
 
-LLM Serving 综述（2023）、Orca（OSDI 2022）、PagedAttention / vLLM（SOSP 2023）、AWQ / GPTQ / SmoothQuant / LLM.int8()、投机解码（ICML 2023）、Sarathi-Serve 与 DistServe（OSDI 2024）、SGLang、Mooncake。
+LLM Serving 综述（2023）、**MoE 推理优化综述（ACM Computing Surveys 2026）**、Orca（OSDI 2022）、PagedAttention / vLLM（SOSP 2023）、AWQ / GPTQ / SmoothQuant / LLM.int8()、投机解码（ICML 2023）、Sarathi-Serve 与 DistServe（OSDI 2024）、SGLang、Mooncake。
+
+> 💡 **先读两篇综述**（第 1 篇是通用 LLM 服务的地图，第 2 篇是 MoE 特有的问题）。MoE 有一整批通用综述不覆盖的难题——专家并行与 all-to-all、专家卸载与缓存、以及"不同专家的激活分布差异极大"给量化带来的麻烦。两篇合起来读，本模块的每一篇论文你都能找到它挂在哪儿。
 
 ---
 
