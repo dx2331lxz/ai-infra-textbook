@@ -206,9 +206,9 @@ export default function HomePage() {
         </div>
       </Section>
 
-      {/* 两个入口 */}
-      <Section title="两种读法，互补使用">
-        <div className="grid gap-4 sm:grid-cols-2">
+      {/* 三个入口 */}
+      <Section title="三块内容，互补使用">
+        <div className="grid gap-4 sm:grid-cols-3">
           <Link
             href="/docs/01-performance-memory"
             className="flex flex-col gap-2 rounded-xl border border-fd-border bg-fd-card p-5 transition-colors hover:bg-fd-accent"
@@ -224,7 +224,16 @@ export default function HomePage() {
           >
             <span className="text-sm font-semibold text-fd-foreground">论文清单</span>
             <span className="text-sm leading-relaxed text-fd-muted-foreground">
-              25 篇 P0 必读 + 约 93 个条目，按模块组织，含 12 周计划与每篇的阅读深度标注。
+              该读什么。25 篇 P0 必读 + 约 93 个条目，按模块组织，含 12 周计划。
+            </span>
+          </Link>
+          <Link
+            href="/papers"
+            className="flex flex-col gap-2 rounded-xl border border-fd-border bg-fd-card p-5 transition-colors hover:bg-fd-accent"
+          >
+            <span className="text-sm font-semibold text-fd-foreground">论文导读</span>
+            <span className="text-sm leading-relaxed text-fd-muted-foreground">
+              读到了什么。与教材独立的模块，每篇一页：论文简介、链接与完整导读。
             </span>
           </Link>
         </div>

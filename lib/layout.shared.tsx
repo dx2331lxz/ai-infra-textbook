@@ -9,6 +9,7 @@ export function baseOptions(): BaseLayoutProps {
     },
     links: [
       { text: '教材', url: '/docs' },
+      { text: '论文导读', url: '/papers' },
       { text: '论文清单', url: '/docs/99-papers' },
     ],
     githubUrl: `https://github.com/${gitConfig.user}/${gitConfig.repo}`,

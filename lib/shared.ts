@@ -5,6 +5,9 @@ export const docsRoute = '/docs';
 export const docsImageRoute = '/og/docs';
 export const docsContentRoute = '/llms.mdx/docs';
 
+// 与教程相互独立的一个内容源：已读论文的简介、链接与导读
+export const papersRoute = '/papers';
+
 // 「在 GitHub 上编辑」链接所指向的仓库
 export const gitConfig = {
   user: 'dx2331lxz',
